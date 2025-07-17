@@ -383,28 +383,37 @@ async function fetchSaunas() {
     }
 }
 
-// showResult関数を少し変更します
-async function showResult() { // async を追加
+async function showResult() {
     questionScreen.classList.add('hidden');
     resultScreen.classList.remove('hidden');
 
-    // ★★★ここからが変更点★★★
-    const allSaunas = await fetchSaunas(); // microCMSから全サウナ情報を取得
-    if (allSaunas.length === 0) return; // 取得失敗時はここで処理を中断
-    // ★★★ここまで★★★
+    // microCMSから全サウナ情報を取得する
+    const allSaunas = await fetchSaunas(); 
+    // もしデータの取得に失敗したら、ここで処理を止める
+    if (!allSaunas) return; 
 
     const resultTypeKey = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
     const resultType = types[resultTypeKey];
 
-    // (中略) タイプ名や説明を表示する部分は変更なし
+    // タイプ名と説明を表示
+    resultTypeNameEl.textContent = resultType.name;
+    resultDescriptionEl.textContent = resultType.description;
+    
+    // 特徴をリスト表示
+    resultFeaturesEl.innerHTML = '';
+    resultType.features.forEach(feature => {
+        const li = document.createElement('li');
+        li.textContent = feature;
+        resultFeaturesEl.appendChild(li);
+    });
 
-    // おすすめサウナの表示ロジック
+    // おすすめサウナを表示
     saunaListEl.innerHTML = '';
-    // allSaunas を使って絞り込むように変更
+    // ★★★ エラー箇所を allSaunas を使うように修正 ★★★
     const recommendedSaunas = allSaunas.filter(sauna => sauna.tags.includes(resultTypeKey));
 
     if (recommendedSaunas.length > 0) {
-        recommendedSaunas.forEach(sauna => {
+         recommendedSaunas.forEach(sauna => {
             const saunaDiv = document.createElement('div');
             saunaDiv.classList.add('sauna-item');
             saunaDiv.innerHTML = `
