@@ -1,1 +1,0 @@
-# asahikwa-sauna-diag
