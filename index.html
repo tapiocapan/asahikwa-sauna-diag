@@ -247,6 +247,30 @@
         // ▼▼▼ サイトの基本設定 ▼▼▼
         // ===============================================================
 
+        const startScreen = document.getElementById('start-screen');
+        const questionScreen = document.getElementById('question-screen');
+        const resultScreen = document.getElementById('result-screen');
+        const startBtn = document.getElementById('start-btn');
+        
+        const questionNumberEl = document.getElementById('question-number');
+        const questionTextEl = document.getElementById('question-text');
+        const answersEl = document.getElementById('answers');
+        
+        const resultTypeNameEl = document.getElementById('result-type-name');
+        const resultDescriptionEl = document.getElementById('result-description');
+        const resultFeaturesEl = document.getElementById('result-features');
+        const saunaListEl = document.getElementById('sauna-list');
+
+        let currentQuestionIndex = 0;
+        let scores = {
+            onyu: 0,
+            silent: 0,
+            social: 0,
+            entame: 0,
+            nature: 0,
+            pro: 0
+        };
+
         // --- 質問リスト ---
         const questions = [
             {
@@ -357,106 +381,30 @@
             }
         };
 
-        // --- 旭川のサウナ施設リスト（microCMSから取得） ---
+        // ===============================================================
+        // ▼▼▼ 診断サイトの動作ロジック ▼▼▼
+        // ===============================================================
 
-// あなたのmicroCMSの情報をここに入力してください
-const serviceDomain = 'saunasindan'; // 例: asahikawa-sauna
-const apiKey = 'deOtHVkbzXQy7uFJmk9v4eq0dk86KP1iLFAW'; // ステップ2でコピーしたAPIキー
+        // --- microCMS連携 ---
+        const serviceDomain = 'saunasindan';
+        const apiKey = 'deOtHVkbzXQy7uFJmk9v4eq0dk86KP1iLFAW';
 
-async function fetchSaunas() {
-    try {
-        const response = await fetch(`https://${serviceDomain}.microcms.io/api/v1/saunas`, {
-            headers: {
-                'X-MICROCMS-API-KEY': apiKey,
-            },
-        });
-        if (!response.ok) {
-            throw new Error('サウナ情報の取得に失敗しました。');
+        async function fetchSaunas() {
+            try {
+                const response = await fetch(`https://${serviceDomain}.microcms.io/api/v1/saunas`, {
+                    headers: { 'X-MICROCMS-API-KEY': apiKey, },
+                });
+                if (!response.ok) {
+                    throw new Error(`サウナ情報の取得に失敗しました: ${response.status}`);
+                }
+                const data = await response.json();
+                return data.contents;
+            } catch (error) {
+                console.error(error);
+                saunaListEl.innerHTML = `<p>エラー: サウナ情報の読み込みに失敗しました。時間をおいて再読み込みしてください。</p>`;
+                return null;
+            }
         }
-        const data = await response.json();
-        return data.contents; // 取得したサウナ施設のリストを返す
-    } catch (error) {
-        console.error(error);
-        // エラーが発生した場合、空のリストを返す
-        saunaListEl.innerHTML = `<p>サウナ情報の読み込みに失敗しました。時間をおいて再読み込みしてください。</p>`;
-        return [];
-    }
-}
-
-async function showResult() {
-    questionScreen.classList.add('hidden');
-    resultScreen.classList.remove('hidden');
-
-    // microCMSから全サウナ情報を取得する
-    const allSaunas = await fetchSaunas(); 
-    // もしデータの取得に失敗したら、ここで処理を止める
-    if (!allSaunas) return; 
-
-    const resultTypeKey = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
-    const resultType = types[resultTypeKey];
-
-    // タイプ名と説明を表示
-    resultTypeNameEl.textContent = resultType.name;
-    resultDescriptionEl.textContent = resultType.description;
-    
-    // 特徴をリスト表示
-    resultFeaturesEl.innerHTML = '';
-    resultType.features.forEach(feature => {
-        const li = document.createElement('li');
-        li.textContent = feature;
-        resultFeaturesEl.appendChild(li);
-    });
-
-    // おすすめサウナを表示
-    saunaListEl.innerHTML = '';
-    // ★★★ エラー箇所を allSaunas を使うように修正 ★★★
-    const recommendedSaunas = allSaunas.filter(sauna => sauna.tags.includes(resultTypeKey));
-
-    if (recommendedSaunas.length > 0) {
-         recommendedSaunas.forEach(sauna => {
-            const saunaDiv = document.createElement('div');
-            saunaDiv.classList.add('sauna-item');
-            saunaDiv.innerHTML = `
-                <img src="${sauna.image.url}" alt="${sauna.name}">
-                <div class="sauna-details">
-                    <h4>${sauna.name}</h4>
-                    <p>${sauna.description}</p>
-                    <p><a href="${sauna.link}" target="_blank" rel="noopener noreferrer">公式サイトを見る &gt;</a></p>
-                </div>
-            `;
-            saunaListEl.appendChild(saunaDiv);
-        });
-    } else {
-         saunaListEl.innerHTML = `<p>現在、このタイプにおすすめのサウナは準備中です。お楽しみに！</p>`;
-    }
-}
-        // ===============================================================
-        // ▼▼▼ 診断サイトの動作ロジック（通常は編集不要）▼▼▼
-        // ===============================================================
-
-        const startScreen = document.getElementById('start-screen');
-        const questionScreen = document.getElementById('question-screen');
-        const resultScreen = document.getElementById('result-screen');
-        const startBtn = document.getElementById('start-btn');
-        
-        const questionNumberEl = document.getElementById('question-number');
-        const questionTextEl = document.getElementById('question-text');
-        const answersEl = document.getElementById('answers');
-        
-        const resultTypeNameEl = document.getElementById('result-type-name');
-        const resultDescriptionEl = document.getElementById('result-description');
-        const resultFeaturesEl = document.getElementById('result-features');
-        const saunaListEl = document.getElementById('sauna-list');
-
-        let currentQuestionIndex = 0;
-        let scores = {
-            onyu: 0,
-            silent: 0,
-            social: 0,
-            entame: 0,
-            nature: 0,
-            pro: 0
-        };
 
         startBtn.addEventListener('click', startQuiz);
 
@@ -466,8 +414,13 @@ async function showResult() {
             showQuestion();
         }
 
+
         function showQuestion() {
-            resetState();
+            // 前の回答ボタンを削除
+            while (answersEl.firstChild) {
+                answersEl.removeChild(answersEl.firstChild);
+            }
+
             const currentQuestion = questions[currentQuestionIndex];
             questionNumberEl.textContent = `Q${currentQuestionIndex + 1}`;
             questionTextEl.textContent = currentQuestion.question;
@@ -481,12 +434,6 @@ async function showResult() {
             });
         }
         
-        function resetState() {
-            while (answersEl.firstChild) {
-                answersEl.removeChild(answersEl.firstChild);
-            }
-        }
-
         function selectAnswer(scoreToAdd) {
             for (const type in scoreToAdd) {
                 if (scores.hasOwnProperty(type)) {
@@ -501,3 +448,49 @@ async function showResult() {
                 showResult();
             }
         }
+
+        async function showResult() {
+            questionScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            const allSaunas = await fetchSaunas();
+            if (!allSaunas) return; 
+
+            const resultTypeKey = Object.keys(scores).reduce((a, b) => scores[a] > scores[b] ? a : b);
+            const resultType = types[resultTypeKey];
+
+            resultTypeNameEl.textContent = resultType.name;
+            resultDescriptionEl.textContent = resultType.description;
+            
+            resultFeaturesEl.innerHTML = '';
+            resultType.features.forEach(feature => {
+                const li = document.createElement('li');
+                li.textContent = feature;
+                resultFeaturesEl.appendChild(li);
+            });
+
+            saunaListEl.innerHTML = '';
+            const recommendedSaunas = allSaunas.filter(sauna => sauna.tags.includes(resultTypeKey));
+
+            if (recommendedSaunas.length > 0) {
+                 recommendedSaunas.forEach(sauna => {
+                    const saunaDiv = document.createElement('div');
+                    saunaDiv.classList.add('sauna-item');
+                    // image.url を使って画像を表示
+                    saunaDiv.innerHTML = `
+                        <img src="${sauna.image.url}" alt="${sauna.name}">
+                        <div class="sauna-details">
+                            <h4>${sauna.name}</h4>
+                            <p>${sauna.description}</p>
+                            <p><a href="${sauna.link}" target="_blank" rel="noopener noreferrer">公式サイトを見る &gt;</a></p>
+                        </div>
+                    `;
+                    saunaListEl.appendChild(saunaDiv);
+                });
+            } else {
+                 saunaListEl.innerHTML = `<p>現在、このタイプにおすすめのサウナは準備中です。お楽しみに！</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
