@@ -234,7 +234,21 @@
                 <div id="sauna-list">
                     </div>
             </div>
-            <button onclick="location.reload()" class="btn">もう一度診断する</button>
+            <div class="result-card" style="margin-top: 40px;">
+                <h3 style="text-align: center;">このサイトの感想をお聞かせください</h3>
+    
+                <iframe 
+                    id="google-form-iframe"
+                    src="" 
+                    width="100%" 
+                    height="600" 
+                    frameborder="0" 
+                    marginheight="0" 
+                    marginwidth="0">
+                    読み込んでいます…
+                </iframe>
+            </div>
+        <button onclick="location.reload()" class="btn">もう一度診断する</button>
         </div>
         
         <footer>
@@ -461,7 +475,25 @@
 
             resultTypeNameEl.textContent = resultType.name;
             resultDescriptionEl.textContent = resultType.description;
-            
+            // --- GoogleフォームのURLを生成して埋め込む ---
+            // 1. あなたのフォームの基本URL (URL末尾の /viewform を /formResponse に変更)
+            const formBaseUrl = "https://docs.google.com/forms/d/e/1FAIpQLSczxI6gPGw9Rgy22gJ4RP3_VqhjhGCd5hKZuu-Iu42cXN7zTA/formResponse";
+
+            // 2. ステップ2でメモした、診断タイプ質問のentry ID
+            const entryId = "entry.171955624";
+
+            // 3. 診断結果タイプをエンコード（日本語をURLで使える形式に変換）
+            const encodedType = encodeURIComponent(resultType.name);
+    
+            // 4. iframeに表示するための最終的なURLを組み立てる (viewformのまま)
+            const iframeSrc = `https://docs.google.com/forms/d/e/1FAIpQLSczxI6gPGw9Rgy22gJ4RP3_VqhjhGCd5hKZuu-Iu42cXN7zTA/viewform?embedded=true&${entryId}=${encodedType}`;
+    
+            // 5. iframe要素を取得して、src属性にURLを設定する
+            const iframe = document.getElementById('google-form-iframe');
+            if (iframe) {
+                iframe.src = iframeSrc;
+            }
+        
             resultFeaturesEl.innerHTML = '';
             resultType.features.forEach(feature => {
                 const li = document.createElement('li');
